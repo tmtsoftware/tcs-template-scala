@@ -1,13 +1,14 @@
 # tcs-template
 
-This project implements an HCD (Hardware Control Daemon) and Assembly using 
-TMT Common Software ([CSW](https://github.com/tmtsoftware/csw-prod)) APIs. 
+This project implements a TCS template Assembly using TMT Common Software 
+([CSW](https://github.com/tmtsoftware/csw-prod)) APIs. 
 
 ## Subprojects
 
-* tcs-template-assembly - an assembly that talks to the tcs-template HCD
-* tcs-template-hcd - an HCD that talks to the tcs-template hardware
-* tcs-template-deploy - for starting/deploying HCD's and Assembly's
+* tcs-template-assembly - a template assembly that implements several command types, monitors state, and loads configuration
+* tcs-template-hcd - an HCD (to be implemented)
+* tcs-template-deploy - for starting/deploying the Assembly and HCD
+* tcs-template-client - a client app that sends commands to the Assembly
 
 ## Build Instructions
 
