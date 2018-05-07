@@ -27,4 +27,7 @@ object TcsTemplateClientApp extends App {
   val resp1 = Await.result(tcsTemplateClient.setTargetWavelength(maybeObsId, "GUIDESTAR", 867.4), 3.seconds)
   println(s"setTargetWavelength: $resp1")
 
+  val resp2 = Await.result(tcsTemplateClient.datum(maybeObsId), 10.seconds)
+  println(s"datum: $resp2")
+
 }

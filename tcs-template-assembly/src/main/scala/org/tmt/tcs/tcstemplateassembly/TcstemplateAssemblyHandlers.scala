@@ -7,12 +7,15 @@ import csw.messages.framework.ComponentInfo
 import csw.messages.location.TrackingEvent
 import csw.messages.scaladsl.TopLevelActorMessage
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.util.Timeout
+import csw.messages.commands.CommandIssue.UnsupportedCommandIssue
 import csw.services.command.scaladsl.CommandResponseManager
 import csw.services.location.scaladsl.LocationService
 import csw.services.logging.scaladsl.LoggerFactory
 
 import scala.async.Async.async
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 /**
  * Domain specific logic should be written in below handlers.
@@ -42,7 +45,7 @@ class TcstemplateAssemblyHandlers(
     ctx.spawnAnonymous(LifecycleActor.behavior(commandResponseManager, loggerFactory))
 
   val monitorActor: ActorRef[MonitorMessage] =
-    ctx.spawnAnonymous(MonitorActor.behavior(commandResponseManager, loggerFactory))
+    ctx.spawnAnonymous(MonitorActor.behavior(AssemblyState.Ready, AssemblyMotionState.Idle, loggerFactory))
 
   val eventHandlerActor: ActorRef[EventMessage] =
     ctx.spawnAnonymous(EventHandlerActor.behavior(commandResponseManager, loggerFactory))
@@ -65,7 +68,53 @@ class TcstemplateAssemblyHandlers(
   }
 
   override def validateCommand(controlCommand: ControlCommand): CommandResponse = {
-    CommandResponse.Accepted(controlCommand.runId)
+
+    implicit val timeout: Timeout = Timeout(3.seconds)
+
+    controlCommand.commandName.name match {
+
+      case "setTargetWavelength" =>
+        log.debug(s"handling setTargetWavelength validation: ${controlCommand}")
+        // TODO: validate command
+
+        // as an immediate reponse command, the 'Accepted' response is not given
+        // FIXME: this is pretty clunky.  Having to return a command result in the validate method breaks
+        // the model of having an actor for each command, since the validate command must be the code block
+        // that returns the result.  Being forced to execute the command in the validation method seems wrong anyway.
+        //commandHandlerActor ! SubmitCommandMessage(controlCommand)
+
+        // query the command response manager to find the reponse
+        //val eventualResponse: Future[CommandResponse] = commandResponseManager.query(controlCommand.runId)
+
+        //val response = Await.result(eventualResponse, 3.seconds)
+
+        //log.debug(s"response = ${response}")
+
+        //response
+
+        CommandResponse.Accepted(controlCommand.runId)
+
+      case "datum" =>
+        log.debug(s"handling datum validation: ${controlCommand}")
+        // TODO: validate command
+
+        // as an long running command, the 'Accepted' response is given
+        CommandResponse.Accepted(controlCommand.runId)
+
+      case "move" =>
+        log.debug(s"handling move validation: ${controlCommand}")
+        // TODO: validate command
+
+        // as an long running command, the 'Accepted' response is given
+        CommandResponse.Accepted(controlCommand.runId)
+
+      case _ =>
+        log.error(s"unhandled message in Monitor Actor onMessage: ${controlCommand}")
+        CommandResponse.Invalid(controlCommand.runId,
+                                UnsupportedCommandIssue(s"Command name: ${controlCommand.commandName.name} not supported"))
+
+    }
+
   }
 
   override def onSubmit(controlCommand: ControlCommand): Unit = {

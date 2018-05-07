@@ -77,7 +77,7 @@ case class CommandHandlerActor(ctx: ActorContext[CommandMessage],
         // ctx.stop(setTargetWavelengthCmdActor)
 
         case "datum" =>
-          log.debug(s"handling move command: ${message.controlCommand}")
+          log.debug(s"handling datum command: ${message.controlCommand}")
           val datumCmdActor: ActorRef[ControlCommand] =
             ctx.spawnAnonymous(DatumCmdActor.behavior(commandResponseManager, loggerFactory))
 

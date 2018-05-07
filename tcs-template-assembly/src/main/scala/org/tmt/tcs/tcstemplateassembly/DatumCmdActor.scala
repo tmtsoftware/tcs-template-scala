@@ -2,7 +2,7 @@ package org.tmt.tcs.tcstemplateassembly
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import csw.messages.commands.ControlCommand
+import csw.messages.commands.{CommandResponse, ControlCommand}
 import csw.services.command.scaladsl.CommandResponseManager
 import csw.services.logging.scaladsl.LoggerFactory
 
@@ -30,9 +30,13 @@ case class DatumCmdActor(ctx: ActorContext[ControlCommand],
 
   private def handleSubmitCommand(message: ControlCommand): Unit = {
 
-    // TODO: implement long running message
+    // long running command
+    log.info("command message received")
 
-    log.info("command message handled")
+    Thread.sleep(4000)
+
+    commandResponseManager.addOrUpdateCommand(message.runId, CommandResponse.Completed(message.runId))
+    log.info("command message completed")
 
   }
 

@@ -29,7 +29,7 @@ case class TcsTemplateClient(source: Prefix, system: ActorSystem, locationServic
 
   import system._
 
-  implicit val timeout: Timeout                 = Timeout(3.seconds)
+  implicit val timeout: Timeout                 = Timeout(30.seconds)
   implicit val scheduler: Scheduler             = system.scheduler
   implicit def actorRefFactory: ActorRefFactory = system
   implicit val mat: ActorMaterializer           = ActorMaterializer()
@@ -52,12 +52,32 @@ case class TcsTemplateClient(source: Prefix, system: ActorSystem, locationServic
    */
   def setTargetWavelength(obsId: Option[ObsId], targetType: String, wavelength: Double): Future[CommandResponse] = {
     getAssembly.flatMap {
-      case Some(hcd) =>
+      case Some(commandService) =>
         val setup = Setup(source, CommandName("setTargetWavelength"), obsId)
           .add(targetTypeKey.set(targetType))
           .add(wavelengthKey.set(wavelength))
 
-        hcd.submitAndSubscribe(setup)
+        // FIXME: see below
+        // the CSW designed way to perform immediate response commands is to do all the work in the validation
+        // method, and return the command response there.  This does not work nicely with having actors
+        // reponsible for commands.  For this reason, the immediate response command is implemented exactly
+        // like long running commands, but the submitAndSubscribe returns faster.
+        commandService.submitAndSubscribe(setup)
+
+      case None =>
+        Future.successful(Error(Id(), "Can't locate TcsTemplateAssembly"))
+    }
+  }
+
+  /**
+   * Sends a setTargetWavelength message to the Assembly and returns the response
+   */
+  def datum(obsId: Option[ObsId]): Future[CommandResponse] = {
+    getAssembly.flatMap {
+      case Some(commandService) =>
+        val setup = Setup(source, CommandName("datum"), obsId)
+
+        commandService.submitAndSubscribe(setup)
 
       case None =>
         Future.successful(Error(Id(), "Can't locate TcsTemplateAssembly"))
