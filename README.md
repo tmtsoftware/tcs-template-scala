@@ -1,4 +1,4 @@
-# tcs-template
+# TCS CSW Template
 
 This project implements a TCS template Assembly using TMT Common Software 
 ([CSW](https://github.com/tmtsoftware/csw-prod)) APIs. 
@@ -6,46 +6,32 @@ This project implements a TCS template Assembly using TMT Common Software
 ## Subprojects
 
 * tcs-template-assembly - a template assembly that implements several command types, monitors state, and loads configuration
-* tcs-template-hcd - an HCD (to be implemented)
+* tcs-template-hcd - an HCD that the assembly communicates with
 * tcs-template-deploy - for starting/deploying the Assembly and HCD
 * tcs-template-client - a client app that sends commands to the Assembly
-
-
-
-# TCS CSW Template
 
 ## 1  Requirements
 
 * Write a Scala and Java template for TCS use
-
-* Call the prototype TcsTemplate
-
-* Project in GitHub should be called tcs-template-scala
-
-* Add HCD as second step
-
+* Template should have detailed comments and design documentation that the developers can follow.
 * Add Java template as additional step
 
-### 1.1  Template Features:
-
+Fully/Partially Completed
 1. Create typed actors for each of the internal components in the architecture doc: Lifecycle Actor, MonitorActor, Command Handler Actor, Event Handler Actor
-2. Supports submit messages:
-
+2. Support submit messages:
 a. immediate completion
 b. query/subscribe for long running commands
 c. command Aggregator
-3. Try to use commands and parameters that make sense in the real world
+3. Use commands and parameters that make sense in the real world
 4. Load and use configuration with the configuration service
-5. Logging usage
-6. State reporting
+5. Build a client app to exercise the assembly commands
+6. Logging usage
+7. State management
 
-Template should have detailed comments and design documentation that the developers can follow.
-
-Deployment will be from jars in the local ivy repo.
-
-Include TcsTemplateAssemblyClientApp that can command the assembly
-
-Also need to use the REPL to command components.
+Not Started
+1. Deployment should be from jars in the local ivy repo.
+2. Also need to use the REPL to command components.
+3. Deployment of multiple Assemblies
 
 ## 2 Documentation
 ### 2.1 Understanding the Template Code
