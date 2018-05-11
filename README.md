@@ -40,32 +40,32 @@ The template contains code that shows how to
 
 1. Create typed actors for each of the internal components in the architecture doc: Lifecycle Actor, MonitorActor, Command Handler Actor, Event Handler Actor
 2. Supports submit messages:
-  1. immediate completion
-  2. query/subscribe for long running commands
-  3. how to use Command Aggregator
+  a. immediate completion
+  b. query/subscribe for long running commands
+  c. how to use Command Aggregator
 3. Load and use configuration with the configuration service
 4. Logging usage
 5. State reporting
 
-#### Creating Typed Actors
+### Creating Typed Actors
 
 The template code creates Typed Actors for the following assembly subcomponents:
 
 TBD - &lt;write up which components are being created&gt;
 
-##### Lifecycle Actor
+#### Lifecycle Actor
 
 The lifecycle actor contains all lifecycle related functions: functions that are performed at startup and shutdown.  Loading configuration and connecting to HCDs and other Assemblies as needed.
 
-##### Monitor Actor
+#### Monitor Actor
 
 Health monitoring for the assembly.  Tracks dependency location changes and monitors health and state of the assembly.
 
-##### Command Handler Actor
+#### Command Handler Actor
 
 Directs submit commands to appropriate workers.  Handles onGoOnline and onGoOffline actions (for now, going offline means ignoring incoming commands)
 
-##### SetTargetWavelengthCmdActor
+#### SetTargetWavelengthCmdActor
 
 This command demonstrates how immediate response commands are implemented.  This example command emulates the TPK Offset command.
 
@@ -77,7 +77,7 @@ wavelength: double
 
 targetType:  enum(SCIENCE|GUIDESTAR)
 
-##### DatumCmdActor
+#### DatumCmdActor
 
 This command demonstrates how long running commands are implemented.  This example emulates the ENC Datum command.
 
@@ -87,7 +87,7 @@ Parameter Types:
 
  Axes: enum(Aximuth|Elevation|BOTH)
 
-##### MoveCmdActor
+#### MoveCmdActor
 
 This command demonstrates how command aggregation can be implemented.  This example emulates the MCS Move command.  The command aggregates HCD commands: Point(axes) and PointDemand(Az, El).
 
@@ -101,11 +101,11 @@ Parameter Types:
 
  el: double
 
-##### FollowCmdActor
+#### FollowCmdActor
 
 TBD
 
-##### Event Handler Actor
+#### Event Handler Actor
 
 This cannot be implemented fully until CSW Event Service becomes available.  For now, events to be published are written to a log file.
 
@@ -117,15 +117,15 @@ TBD - &lt;write up the command, parameters and where it is in the code&gt;
 
 TBD - &lt;write up the command, parameters and where it is in the code&gt;
 
-#### Support for Splitting commands into subcommands and aggregating command response
+### Support for Splitting commands into subcommands and aggregating command response
 
 TBD
 
-#### Using the Configuration Service
+### Using the Configuration Service
 
 TBD
 
-#### Support for State Reporting
+### Support for State Reporting
 
 TBD
 
