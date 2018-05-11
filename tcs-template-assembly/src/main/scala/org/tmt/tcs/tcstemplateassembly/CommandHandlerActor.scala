@@ -2,31 +2,36 @@ package org.tmt.tcs.tcstemplateassembly
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import csw.services.command.scaladsl.CommandResponseManager
+import csw.services.command.scaladsl.{CommandResponseManager, CommandService}
 import csw.services.logging.scaladsl.LoggerFactory
-import csw.messages.commands.{ControlCommand}
+import csw.messages.commands.ControlCommand
 
 // Add messages here
 sealed trait CommandMessage
 
 object CommandMessage {
 
-  case class SubmitCommandMessage(controlCommand: ControlCommand) extends CommandMessage
-  case class GoOnlineMessage()                                    extends CommandMessage
-  case class GoOfflineMessage()                                   extends CommandMessage
+  case class SubmitCommandMessage(controlCommand: ControlCommand)           extends CommandMessage
+  case class GoOnlineMessage()                                              extends CommandMessage
+  case class GoOfflineMessage()                                             extends CommandMessage
+  case class UpdateTemplateHcdLocation(templateHcd: Option[CommandService]) extends CommandMessage
 
 }
 
 object CommandHandlerActor {
   def behavior(commandResponseManager: CommandResponseManager,
                online: Boolean,
+               templateHcd: Option[CommandService],
                loggerFactory: LoggerFactory): Behavior[CommandMessage] =
-    Behaviors.mutable(ctx ⇒ CommandHandlerActor(ctx, commandResponseManager, online: Boolean, loggerFactory))
+    Behaviors.mutable(
+      ctx ⇒ CommandHandlerActor(ctx, commandResponseManager, online: Boolean, templateHcd: Option[CommandService], loggerFactory)
+    )
 }
 
 case class CommandHandlerActor(ctx: ActorContext[CommandMessage],
                                commandResponseManager: CommandResponseManager,
                                online: Boolean,
+                               templateHcd: Option[CommandService],
                                loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[CommandMessage] {
 
@@ -44,11 +49,15 @@ case class CommandHandlerActor(ctx: ActorContext[CommandMessage],
 
       case (x: GoOfflineMessage) =>
         // change state of the actor to "online = false"
-        behavior(commandResponseManager, false, loggerFactory)
+        behavior(commandResponseManager, false, templateHcd, loggerFactory)
 
       case (x: GoOnlineMessage) =>
         // change state of the actor to "online = true"
-        behavior(commandResponseManager, true, loggerFactory)
+        behavior(commandResponseManager, true, templateHcd, loggerFactory)
+
+      case (x: UpdateTemplateHcdLocation) =>
+        // change state of the actor to "online = true"
+        behavior(commandResponseManager, true, x.templateHcd, loggerFactory)
 
       case _ =>
         log.error(s"unhandled message in Monitor Actor onMessage: $msg")
@@ -86,7 +95,7 @@ case class CommandHandlerActor(ctx: ActorContext[CommandMessage],
         case "move" =>
           log.debug(s"handling move command: ${message.controlCommand}")
           val moveCmdActor: ActorRef[ControlCommand] =
-            ctx.spawnAnonymous(MoveCmdActor.behavior(commandResponseManager, loggerFactory))
+            ctx.spawnAnonymous(MoveCmdActor.behavior(commandResponseManager, templateHcd, loggerFactory))
 
           moveCmdActor ! message.controlCommand
 

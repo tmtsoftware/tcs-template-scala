@@ -1,5 +1,6 @@
 package org.tmt.tcs.tcstemplatehcd
 
+import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.ActorContext
 import csw.framework.scaladsl.{ComponentHandlers, CurrentStatePublisher}
 import csw.messages.commands.{CommandResponse, ControlCommand}
@@ -43,7 +44,31 @@ class TcstemplateHcdHandlers(
     CommandResponse.Accepted(controlCommand.runId)
   }
 
-  override def onSubmit(controlCommand: ControlCommand): Unit = {}
+  override def onSubmit(controlCommand: ControlCommand): Unit = {
+
+    controlCommand.commandName.name match {
+
+      case "point" =>
+        log.debug(s"handling point command: ${controlCommand}")
+
+        Thread.sleep(500)
+
+        commandResponseManager.addOrUpdateCommand(controlCommand.runId, CommandResponse.Completed(controlCommand.runId))
+
+      case "pointDemand" =>
+        log.debug(s"handling pointDemand command: ${controlCommand}")
+
+        Thread.sleep(1000)
+
+        commandResponseManager.addOrUpdateCommand(controlCommand.runId, CommandResponse.Completed(controlCommand.runId))
+
+      case _ =>
+        log.error(s"unhandled message in Monitor Actor onMessage: ${controlCommand}")
+      // maintain actor state
+
+    }
+
+  }
 
   override def onOneway(controlCommand: ControlCommand): Unit = {}
 

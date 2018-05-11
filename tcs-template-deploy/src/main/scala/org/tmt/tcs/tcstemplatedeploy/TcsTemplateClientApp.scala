@@ -30,4 +30,7 @@ object TcsTemplateClientApp extends App {
   val resp2 = Await.result(tcsTemplateClient.datum(maybeObsId), 10.seconds)
   println(s"datum: $resp2")
 
+  val resp3 = Await.result(tcsTemplateClient.move(maybeObsId, "BOTH", 2.34, 5.67), 10.seconds)
+  println(s"move: $resp3")
+
 }

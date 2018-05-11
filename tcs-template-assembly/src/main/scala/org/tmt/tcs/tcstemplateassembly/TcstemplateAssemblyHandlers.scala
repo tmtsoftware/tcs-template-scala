@@ -1,17 +1,28 @@
 package org.tmt.tcs.tcstemplateassembly
 
+import java.nio.file.Paths
+
+import akka.actor.ActorRefFactory
 import akka.actor.typed.scaladsl.ActorContext
+import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
 import csw.framework.scaladsl.{ComponentHandlers, CurrentStatePublisher}
 import csw.messages.commands.{CommandResponse, ControlCommand}
 import csw.messages.framework.ComponentInfo
-import csw.messages.location.TrackingEvent
+import csw.messages.location.{AkkaLocation, LocationRemoved, LocationUpdated, TrackingEvent}
 import csw.messages.scaladsl.TopLevelActorMessage
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.typesafe.config.{Config, ConfigObject}
+import csw.framework.exceptions.FailureStop
 import csw.messages.commands.CommandIssue.UnsupportedCommandIssue
-import csw.services.command.scaladsl.CommandResponseManager
+import csw.services.command.scaladsl.{CommandResponseManager, CommandService}
+import csw.services.config.api.models.ConfigData
+import csw.services.config.api.scaladsl.{ConfigClientService, ConfigService}
+import csw.services.config.client.scaladsl.ConfigClientFactory
 import csw.services.location.scaladsl.LocationService
 import csw.services.logging.scaladsl.LoggerFactory
+import org.tmt.tcs.tcstemplateassembly.MonitorMessage.LocationEventMessage
 
 import scala.async.Async.async
 import scala.concurrent.duration._
@@ -40,9 +51,18 @@ class TcstemplateAssemblyHandlers(
   import org.tmt.tcs.tcstemplateassembly.LifecycleMessage._
   import org.tmt.tcs.tcstemplateassembly.CommandMessage._
 
+  // Handle to the config client service
+  private val configClient: ConfigClientService = ConfigClientFactory.clientApi(ctx.system.toUntyped, locationService)
+
+  // Load the configuration from the configuration service
+  val assemblyConfig: Config = getAssemblyConfig
+
+  // reference to the template HCD
+  var templateHcd: Option[CommandService] = None
+
   // create the assembly's components
   val lifecycleActor: ActorRef[LifecycleMessage] =
-    ctx.spawnAnonymous(LifecycleActor.behavior(commandResponseManager, loggerFactory))
+    ctx.spawnAnonymous(LifecycleActor.behavior(commandResponseManager, assemblyConfig, loggerFactory))
 
   val monitorActor: ActorRef[MonitorMessage] =
     ctx.spawnAnonymous(MonitorActor.behavior(AssemblyState.Ready, AssemblyMotionState.Idle, loggerFactory))
@@ -51,7 +71,7 @@ class TcstemplateAssemblyHandlers(
     ctx.spawnAnonymous(EventHandlerActor.behavior(commandResponseManager, loggerFactory))
 
   val commandHandlerActor: ActorRef[CommandMessage] =
-    ctx.spawnAnonymous(CommandHandlerActor.behavior(commandResponseManager, true, loggerFactory))
+    ctx.spawnAnonymous(CommandHandlerActor.behavior(commandResponseManager, true, templateHcd, loggerFactory))
 
   override def initialize(): Future[Unit] = async {
     log.debug("initialize called")
@@ -64,7 +84,21 @@ class TcstemplateAssemblyHandlers(
   }
 
   override def onLocationTrackingEvent(trackingEvent: TrackingEvent): Unit = {
-    // pass tracking event to the MonitorActor
+
+    log.debug(s"onLocationTrackingEvent called: $trackingEvent")
+    trackingEvent match {
+      case LocationUpdated(location) =>
+        templateHcd = Some(new CommandService(location.asInstanceOf[AkkaLocation])(ctx.system))
+      case LocationRemoved(_) =>
+        templateHcd = None
+    }
+
+    // tell the command actor that the location of Hcd has changed
+    commandHandlerActor ! UpdateTemplateHcdLocation(templateHcd)
+
+    // tell the command actor that the location of Hcd has changed
+    monitorActor ! LocationEventMessage(templateHcd)
+
   }
 
   override def validateCommand(controlCommand: ControlCommand): CommandResponse = {
@@ -144,6 +178,33 @@ class TcstemplateAssemblyHandlers(
   override def onGoOnline(): Unit = {
     // send GoOnline Message to CommandHandler
     commandHandlerActor ! GoOnlineMessage()
+  }
+
+  case class ConfigNotAvailableException() extends FailureStop("Configuration not available. Initialization failure.")
+
+  private def getAssemblyConfig: Config = {
+
+    implicit val context: ActorRefFactory = ctx.system.toUntyped
+
+    implicit val mat: ActorMaterializer = ActorMaterializer()
+
+    val configData: ConfigData = Await.result(getAssemblyConfigData, 10.seconds)
+
+    Await.result(configData.toConfigObject, 3.seconds)
+
+  }
+
+  private def getAssemblyConfigData: Future[ConfigData] = {
+
+    log.info("loading assembly configuration")
+
+    configClient.getActive(Paths.get("org/tmt/tcs/tcs_test.conf")).flatMap {
+      case Some(config) ⇒ Future.successful(config) // do work
+      case None         ⇒
+        // required configuration could not be found in the configuration service. Component can choose to stop until the configuration is made available in the
+        // configuration service and started again
+        throw ConfigNotAvailableException()
+    }
   }
 
 }

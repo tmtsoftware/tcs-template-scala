@@ -2,7 +2,9 @@ package org.tmt.tcs.tcstemplateassembly
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import com.typesafe.config.Config
 import csw.services.command.scaladsl.CommandResponseManager
+import csw.services.config.api.models.ConfigData
 import csw.services.logging.scaladsl.LoggerFactory
 
 // Add messages here
@@ -16,12 +18,15 @@ object LifecycleMessage {
 }
 
 object LifecycleActor {
-  def behavior(commandResponseManager: CommandResponseManager, loggerFactory: LoggerFactory): Behavior[LifecycleMessage] =
-    Behaviors.mutable(ctx ⇒ LifecycleActor(ctx, commandResponseManager, loggerFactory))
+  def behavior(commandResponseManager: CommandResponseManager,
+               assemblyConfig: Config,
+               loggerFactory: LoggerFactory): Behavior[LifecycleMessage] =
+    Behaviors.mutable(ctx ⇒ LifecycleActor(ctx, commandResponseManager, assemblyConfig: Config, loggerFactory))
 }
 
 case class LifecycleActor(ctx: ActorContext[LifecycleMessage],
                           commandResponseManager: CommandResponseManager,
+                          assemblyConfig: Config,
                           loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[LifecycleMessage] {
 
@@ -40,8 +45,9 @@ case class LifecycleActor(ctx: ActorContext[LifecycleMessage],
 
   private def doInitialize(message: InitializeMessage): Unit = {
 
-    // TODO: load configuration
-    // how do other components get their config?  Send a message?
+    // example of working with Config
+    val bazValue: Int = assemblyConfig.getInt("foo.bar.baz")
+    log.debug(s"foo.bar.baz config element value is: $bazValue")
 
     log.info("initialize command completed")
 

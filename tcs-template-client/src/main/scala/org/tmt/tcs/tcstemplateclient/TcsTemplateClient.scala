@@ -38,6 +38,9 @@ case class TcsTemplateClient(source: Prefix, system: ActorSystem, locationServic
 
   private val targetTypeKey: Key[String] = KeyType.StringKey.make("targetType")
   private val wavelengthKey: Key[Double] = KeyType.DoubleKey.make("wavelength")
+  private val axesKey: Key[String]       = KeyType.StringKey.make("axes")
+  private val azKey: Key[Double]         = KeyType.DoubleKey.make("az")
+  private val elKey: Key[Double]         = KeyType.DoubleKey.make("el")
 
   /**
    * Gets a reference to the running assembly from the location service, if found.
@@ -60,7 +63,7 @@ case class TcsTemplateClient(source: Prefix, system: ActorSystem, locationServic
         // FIXME: see below
         // the CSW designed way to perform immediate response commands is to do all the work in the validation
         // method, and return the command response there.  This does not work nicely with having actors
-        // reponsible for commands.  For this reason, the immediate response command is implemented exactly
+        // responsible for commands.  For this reason, the immediate response command is implemented exactly
         // like long running commands, but the submitAndSubscribe returns faster.
         commandService.submitAndSubscribe(setup)
 
@@ -84,4 +87,21 @@ case class TcsTemplateClient(source: Prefix, system: ActorSystem, locationServic
     }
   }
 
+  /**
+   * Sends a setTargetWavelength message to the Assembly and returns the response
+   */
+  def move(obsId: Option[ObsId], axes: String, az: Double, el: Double): Future[CommandResponse] = {
+    getAssembly.flatMap {
+      case Some(commandService) =>
+        val setup = Setup(source, CommandName("move"), obsId)
+          .add(axesKey.set(axes))
+          .add(azKey.set(az))
+          .add(elKey.set(el))
+
+        commandService.submitAndSubscribe(setup)
+
+      case None =>
+        Future.successful(Error(Id(), "Can't locate TcsTemplateAssembly"))
+    }
+  }
 }
