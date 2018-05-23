@@ -18,14 +18,12 @@ object LifecycleMessage {
 }
 
 object LifecycleActor {
-  def behavior(commandResponseManager: CommandResponseManager,
-               assemblyConfig: Config,
+  def behavior(assemblyConfig: Config,
                loggerFactory: LoggerFactory): Behavior[LifecycleMessage] =
-    Behaviors.mutable(ctx ⇒ LifecycleActor(ctx, commandResponseManager, assemblyConfig: Config, loggerFactory))
+    Behaviors.mutable(ctx ⇒ LifecycleActor(ctx, assemblyConfig: Config, loggerFactory))
 }
 
 case class LifecycleActor(ctx: ActorContext[LifecycleMessage],
-                          commandResponseManager: CommandResponseManager,
                           assemblyConfig: Config,
                           loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[LifecycleMessage] {

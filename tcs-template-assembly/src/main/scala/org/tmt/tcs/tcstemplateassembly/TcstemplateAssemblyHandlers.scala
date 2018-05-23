@@ -62,13 +62,13 @@ class TcstemplateAssemblyHandlers(
 
   // create the assembly's components
   val lifecycleActor: ActorRef[LifecycleMessage] =
-    ctx.spawnAnonymous(LifecycleActor.behavior(commandResponseManager, assemblyConfig, loggerFactory))
+    ctx.spawnAnonymous(LifecycleActor.behavior(assemblyConfig, loggerFactory))
 
   val monitorActor: ActorRef[MonitorMessage] =
     ctx.spawnAnonymous(MonitorActor.behavior(AssemblyState.Ready, AssemblyMotionState.Idle, loggerFactory))
 
   val eventHandlerActor: ActorRef[EventMessage] =
-    ctx.spawnAnonymous(EventHandlerActor.behavior(commandResponseManager, loggerFactory))
+    ctx.spawnAnonymous(EventHandlerActor.behavior(loggerFactory))
 
   val commandHandlerActor: ActorRef[CommandMessage] =
     ctx.spawnAnonymous(CommandHandlerActor.behavior(commandResponseManager, true, templateHcd, loggerFactory))

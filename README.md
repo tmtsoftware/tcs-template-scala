@@ -10,48 +10,26 @@ This project implements a TCS template Assembly using TMT Common Software
 * tcs-template-deploy - for starting/deploying the Assembly and HCD
 * tcs-template-client - a client app that sends commands to the Assembly
 
-## Requirements
+## Examples in the template
 
-* Write a Scala and Java template for TCS use
-* Template should have detailed comments and design documentation that the developers can follow.
-* Add Java template as additional step
-
-Fully/Partially Completed
-1. Create typed actors for each of the internal components in the architecture doc: Lifecycle Actor, MonitorActor, Command Handler Actor, Event Handler Actor
-2. Support submit messages:
+This template shows working examples of:
+1. Create typed actors for each of the internal components in the TCS architecture doc: Lifecycle Actor, MonitorActor, Command Handler Actor, Event Handler Actor
+2. Submit messages:
 a. immediate completion
 b. query/subscribe for long running commands
-c. command Aggregator
-3. Use commands and parameters that make sense in the real world
-4. Load and use configuration with the configuration service
-5. Build a client app to exercise the assembly commands
-6. Logging usage
-7. State management
+c. submitting a set of messages, returning a single final response
+4. Loading and using configuration with the configuration service
+5. Client app to exercise the assembly commands
 
-Not Started
-1. Deployment should be from jars in the local ivy repo.
-2. Also need to use the REPL to command components.
-3. Deployment of multiple Assemblies
 
 ##  Documentation
-### Understanding the Template Code
-
-The template contains code that shows how to
-
-1. Create typed actors for each of the internal components in the architecture doc: Lifecycle Actor, MonitorActor, Command Handler Actor, Event Handler Actor
-2. Supports submit messages:
-  a. immediate completion
-  b. query/subscribe for long running commands
-  c. how to use Command Aggregator
-3. Load and use configuration with the configuration service
-4. Logging usage
-5. State reporting
 
 ### Creating Typed Actors
 
 The template code creates Typed Actors for the following assembly subcomponents:
 
-TBD - &lt;write up which components are being created&gt;
+Lifecycle Actor, Monitor Actor, Command Handler Actor and EventPublisher Actor.  
+Also actors for each command: SetTargetWavelength, Datum and Move.
 
 #### Lifecycle Actor
 
@@ -101,29 +79,20 @@ Parameter Types:
 
  el: double
 
-#### FollowCmdActor
-
-TBD
 
 #### Event Handler Actor
 
 This cannot be implemented fully until CSW Event Service becomes available.  For now, events to be published are written to a log file.
 
-### Support for immediate completion Submit Commands
-
-TBD - &lt;write up the command, parameters and where it is in the code&gt;
-
-### Support for long running Submit Commands
-
-TBD - &lt;write up the command, parameters and where it is in the code&gt;
-
-### Support for Splitting commands into subcommands and aggregating command response
-
-TBD
-
 ### Using the Configuration Service
 
-TBD
+The configuration service example code is in TcstemplateAssemblyHandlers.scala.  A ConfigClientService is 
+obtained at startup and the configuration is loaded in the method: getAssemblyConfig, which returns a Config 
+instance.  
+
+The Config is supplied to the LifecycleActor's behavior when it is spawned.  During the assembly initialize(),
+an InitializeMessage is sent to the LifecycleActor, and upon receipt a configuration value is read and sent
+to logger.
 
 ### Support for State Reporting
 

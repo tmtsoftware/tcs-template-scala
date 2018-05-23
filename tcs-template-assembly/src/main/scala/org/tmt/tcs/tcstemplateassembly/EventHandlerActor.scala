@@ -15,12 +15,11 @@ object EventMessage {
 }
 
 object EventHandlerActor {
-  def behavior(commandResponseManager: CommandResponseManager, loggerFactory: LoggerFactory): Behavior[EventMessage] =
-    Behaviors.mutable(ctx ⇒ EventHandlerActor(ctx, commandResponseManager, loggerFactory))
+  def behavior(loggerFactory: LoggerFactory): Behavior[EventMessage] =
+    Behaviors.mutable(ctx ⇒ EventHandlerActor(ctx, loggerFactory))
 }
 
 case class EventHandlerActor(ctx: ActorContext[EventMessage],
-                             commandResponseManager: CommandResponseManager,
                              loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[EventMessage] {
 
