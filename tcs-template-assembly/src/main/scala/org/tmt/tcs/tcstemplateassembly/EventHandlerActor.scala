@@ -19,8 +19,7 @@ object EventHandlerActor {
     Behaviors.mutable(ctx ⇒ EventHandlerActor(ctx, loggerFactory))
 }
 
-case class EventHandlerActor(ctx: ActorContext[EventMessage],
-                             loggerFactory: LoggerFactory)
+case class EventHandlerActor(ctx: ActorContext[EventMessage], loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[EventMessage] {
 
   import org.tmt.tcs.tcstemplateassembly.EventMessage._

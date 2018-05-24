@@ -10,6 +10,7 @@ import csw.messages.scaladsl.TopLevelActorMessage
 import csw.services.command.scaladsl.CommandResponseManager
 import csw.services.location.scaladsl.LocationService
 import csw.services.logging.scaladsl.LoggerFactory
+import org.tmt.tcs.tcstemplatehcd.StatePublisherMessage.StartMessage
 
 import scala.async.Async.async
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -33,6 +34,12 @@ class TcstemplateHcdHandlers(
 
   implicit val ec: ExecutionContextExecutor = ctx.executionContext
   private val log                           = loggerFactory.getLogger
+
+  // create the assembly's components
+  val statePublisherActor: ActorRef[StatePublisherMessage] =
+    ctx.spawnAnonymous(StatePublisherActor.behavior(currentStatePublisher, loggerFactory))
+
+  statePublisherActor ! StartMessage()
 
   override def initialize(): Future[Unit] = async {
     log.debug("initialize called")

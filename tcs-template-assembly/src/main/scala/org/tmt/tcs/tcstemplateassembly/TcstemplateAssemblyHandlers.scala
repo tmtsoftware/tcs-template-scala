@@ -10,19 +10,19 @@ import csw.messages.commands.{CommandResponse, ControlCommand}
 import csw.messages.framework.ComponentInfo
 import csw.messages.location.{AkkaLocation, LocationRemoved, LocationUpdated, TrackingEvent}
 import csw.messages.scaladsl.TopLevelActorMessage
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.actor.typed.ActorRef
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.typesafe.config.{Config, ConfigObject}
+import com.typesafe.config.Config
 import csw.framework.exceptions.FailureStop
 import csw.messages.commands.CommandIssue.UnsupportedCommandIssue
-import csw.services.command.scaladsl.{CommandResponseManager, CommandService}
+import csw.services.command.scaladsl.{CommandResponseManager, CommandService, CurrentStateSubscription}
 import csw.services.config.api.models.ConfigData
-import csw.services.config.api.scaladsl.{ConfigClientService, ConfigService}
+import csw.services.config.api.scaladsl.ConfigClientService
 import csw.services.config.client.scaladsl.ConfigClientFactory
 import csw.services.location.scaladsl.LocationService
 import csw.services.logging.scaladsl.LoggerFactory
-import org.tmt.tcs.tcstemplateassembly.MonitorMessage.LocationEventMessage
+import org.tmt.tcs.tcstemplateassembly.MonitorMessage.{CurrentStateEventMessage, LocationEventMessage}
 
 import scala.async.Async.async
 import scala.concurrent.duration._
@@ -60,6 +60,8 @@ class TcstemplateAssemblyHandlers(
   // reference to the template HCD
   var templateHcd: Option[CommandService] = None
 
+  var subscription: Option[CurrentStateSubscription] = None
+
   // create the assembly's components
   val lifecycleActor: ActorRef[LifecycleMessage] =
     ctx.spawnAnonymous(LifecycleActor.behavior(assemblyConfig, loggerFactory))
@@ -88,9 +90,14 @@ class TcstemplateAssemblyHandlers(
     log.debug(s"onLocationTrackingEvent called: $trackingEvent")
     trackingEvent match {
       case LocationUpdated(location) =>
+        // new Hcd Command service is stored as the Some option
         templateHcd = Some(new CommandService(location.asInstanceOf[AkkaLocation])(ctx.system))
+        // set up Hcd CurrentState subscription to be handled by the monitor actor
+        subscription = Some(templateHcd.get.subscribeCurrentState(monitorActor ! CurrentStateEventMessage(_)))
       case LocationRemoved(_) =>
         templateHcd = None
+        // TODO: not sure if this is necessary
+        subscription.get.unsubscribe()
     }
 
     // tell the command actor that the location of Hcd has changed

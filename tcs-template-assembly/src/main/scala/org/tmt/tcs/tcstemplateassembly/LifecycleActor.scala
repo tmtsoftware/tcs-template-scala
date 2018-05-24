@@ -18,14 +18,11 @@ object LifecycleMessage {
 }
 
 object LifecycleActor {
-  def behavior(assemblyConfig: Config,
-               loggerFactory: LoggerFactory): Behavior[LifecycleMessage] =
+  def behavior(assemblyConfig: Config, loggerFactory: LoggerFactory): Behavior[LifecycleMessage] =
     Behaviors.mutable(ctx ⇒ LifecycleActor(ctx, assemblyConfig: Config, loggerFactory))
 }
 
-case class LifecycleActor(ctx: ActorContext[LifecycleMessage],
-                          assemblyConfig: Config,
-                          loggerFactory: LoggerFactory)
+case class LifecycleActor(ctx: ActorContext[LifecycleMessage], assemblyConfig: Config, loggerFactory: LoggerFactory)
     extends Behaviors.MutableBehavior[LifecycleMessage] {
 
   import org.tmt.tcs.tcstemplateassembly.LifecycleMessage._

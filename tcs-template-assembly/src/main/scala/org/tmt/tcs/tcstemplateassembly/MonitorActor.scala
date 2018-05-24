@@ -2,7 +2,8 @@ package org.tmt.tcs.tcstemplateassembly
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import csw.services.command.scaladsl.{CommandResponseManager, CommandService}
+import csw.messages.params.states.CurrentState
+import csw.services.command.scaladsl.CommandService
 import csw.services.logging.scaladsl.LoggerFactory
 
 // Add messages here
@@ -13,7 +14,7 @@ object MonitorMessage {
   case class AssemblyStateChangeMessage(assemblyState: AssemblyState.AssemblyState)                         extends MonitorMessage
   case class AssemblyMotionStateChangeMessage(assemblyMotionState: AssemblyMotionState.AssemblyMotionState) extends MonitorMessage
   case class LocationEventMessage(templateHcd: Option[CommandService])                                      extends MonitorMessage
-
+  case class CurrentStateEventMessage(currentState: CurrentState)                                           extends MonitorMessage
 }
 
 object AssemblyState extends Enumeration {
@@ -51,6 +52,7 @@ case class MonitorActor(ctx: ActorContext[MonitorMessage],
   override def onMessage(msg: MonitorMessage): Behavior[MonitorMessage] = {
     msg match {
       case (x: LocationEventMessage)             => onLocationEventMessage(x)
+      case (x: CurrentStateEventMessage)         => onCurrentStateEventMessage(x)
       case (x: AssemblyStateChangeMessage)       => onAssemblyStateChangeMessage(x)
       case (x: AssemblyMotionStateChangeMessage) => onAssemblyMotionStateChangeMessage(x)
       case _                                     => log.error(s"unhandled message in Monitor Actor onMessage: $msg")
@@ -58,7 +60,7 @@ case class MonitorActor(ctx: ActorContext[MonitorMessage],
     this
   }
 
-  private def onAssemblyStateChangeMessage(message: AssemblyStateChangeMessage): Unit = {
+  private def onAssemblyStateChangeMessage(message: AssemblyStateChangeMessage): Behavior[MonitorMessage] = {
 
     log.info("assembly state change event message handled")
 
@@ -66,7 +68,7 @@ case class MonitorActor(ctx: ActorContext[MonitorMessage],
 
   }
 
-  private def onAssemblyMotionStateChangeMessage(message: AssemblyMotionStateChangeMessage): Unit = {
+  private def onAssemblyMotionStateChangeMessage(message: AssemblyMotionStateChangeMessage): Behavior[MonitorMessage] = {
 
     log.info("assembly motion state change event message handled")
 
@@ -74,7 +76,7 @@ case class MonitorActor(ctx: ActorContext[MonitorMessage],
 
   }
 
-  private def onLocationEventMessage(message: LocationEventMessage): Unit = {
+  private def onLocationEventMessage(message: LocationEventMessage): Behavior[MonitorMessage] = {
 
     log.info("assembly motion state change event message handled")
 
@@ -94,4 +96,18 @@ case class MonitorActor(ctx: ActorContext[MonitorMessage],
     }
 
   }
+
+  private def onCurrentStateEventMessage(message: CurrentStateEventMessage): Behavior[MonitorMessage] = {
+
+    log.info("current state handler")
+
+    val currentState: CurrentState = message.currentState
+
+    log.info(s"current state = $currentState")
+
+    // here the Monitor Actor can change its state depending on the current state of the HCD
+    MonitorActor.behavior(assemblyState, assemblyMotionState, loggerFactory)
+
+  }
+
 }
