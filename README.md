@@ -19,7 +19,8 @@ a. immediate completion
 b. query/subscribe for long running commands
 c. submitting a set of messages, returning a single final response
 4. Loading and using configuration with the configuration service
-5. Client app to exercise the assembly commands
+5. HCD to Assembly CurrentState publish/subscribe
+6. Client app to exercise the assembly commands
 
 
 ##  Documentation
