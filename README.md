@@ -164,13 +164,7 @@ The client app is not part of the CSW template.  It was added with the following
 3. Add the App object code to tcs-template-deploy/src/main/scala/org.tmt.tcs.tcstemplatedeploy as TcsTemplateClientApp.scala.  This is the same location as the container starting apps.
 4. Sbt build stage on the project will create the necessary scripts with jar dependencies to target/universal/stage/bin
 
-#### Running
 
-TBD
-
-### Run using the REPL
-
-TBD
 
 
 

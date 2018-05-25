@@ -96,7 +96,7 @@ class TcstemplateAssemblyHandlers(
         subscription = Some(templateHcd.get.subscribeCurrentState(monitorActor ! CurrentStateEventMessage(_)))
       case LocationRemoved(_) =>
         templateHcd = None
-        // TODO: not sure if this is necessary
+        // FIXME: not sure if this is necessary
         subscription.get.unsubscribe()
     }
 
